@@ -28,6 +28,8 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2025-05-01' = {
   name: subnetName
   parent: vNet
   properties: {
+    // prevent resource in this subnet to access the internet
+    defaultOutboundAccess: false
     addressPrefix: subnetAddrPrefix
     networkSecurityGroup: {
       id: nsg.id
