@@ -97,7 +97,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2025-06-01' = {
   resource tableServices 'tableServices' = {
     name: 'default'
     resource tables 'tables' = {
-      name: 'likesAmount'
+      name: 'lastDeployment'
     }
   }
 }
@@ -194,6 +194,7 @@ resource functionApp 'Microsoft.Web/sites@2025-03-01' = {
     siteConfig: {
       minTlsVersion: '1.2'
       linuxFxVersion: 'Python|3.12'
+      functionAppScaleLimit: 2 // max 2 instances ever
     }
   }
 
