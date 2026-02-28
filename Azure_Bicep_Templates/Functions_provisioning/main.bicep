@@ -16,6 +16,12 @@ param resourceToken string = toLower(uniqueString(resourceGroup().id))
 @description('A globally unique name for your deployed function app.')
 param appName string = 'fnapp-${resourceToken}'
 
+@description('Name of the existing Log Analytics Workspace in a resource group')
+param logAnalyticsWorkspaceName string
+
+@description('Resource group where the Log Analytics Workspace exists')
+param logsResourceGroupName string
+
 //********************************************
 // Variables
 //********************************************
@@ -31,24 +37,13 @@ var storageTableDataContributorId = '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
 var monitoringMetricsPublisherId = '3913510d-42f4-4e42-8a64-420c390055eb'
 
 //********************************************
-// Azure resources required by your function app.
+// Link App Insights to existing Log Analytics Workspace
 //********************************************
 
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'log-${resourceToken}'
-  location: location
-  properties: any({
-    retentionInDays: 30
-    workspaceCapping: {
-      dailyQuotaGb: 1 // stops ingestion after 1GB in a day
-    }
-    features: {
-      searchVersion: 1
-    }
-    sku: {
-      name: 'PerGB2018'
-    }
-  })
+// Reference the existing workspace
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2025-07-01' existing = {
+  name: logAnalyticsWorkspaceName
+  scope: resourceGroup(logsResourceGroupName)
 }
 
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
@@ -97,7 +92,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2025-06-01' = {
   resource tableServices 'tableServices' = {
     name: 'default'
     resource tables 'tables' = {
-      name: 'lastDeployment'
+      name: 'DeploymentInfo'
     }
   }
 }
@@ -210,6 +205,7 @@ resource functionApp 'Microsoft.Web/sites@2025-03-01' = {
       APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'ClientId=${userAssignedIdentity.properties.clientId};Authorization=AAD'
       FUNCTIONS_WORKER_RUNTIME: 'python'
       FUNCTIONS_EXTENSION_VERSION: '~4'
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
     }
   }
 }
