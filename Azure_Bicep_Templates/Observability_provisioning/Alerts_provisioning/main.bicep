@@ -9,6 +9,9 @@ param alertPrefix string
 @description('Link alert to app insights.')
 param appInsightsId string
 
+@description('Email for notifications when alert rule is triggred.')
+param email string
+
 // Alert: High error rate
 resource highErrorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: '${alertPrefix}-high-error-alert'
@@ -39,6 +42,27 @@ resource highErrorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
         }
       ]
     }
-    actions: []
+    actions: [
+      {
+        actionGroupId: appActionGroup.id
+      }
+    ]
+  }
+}
+
+resource appActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
+  name: 'app-notify-by-email-action-group'
+  location: 'global'
+  tags: tags
+  properties: {
+    groupShortName: 'appAlert'
+    enabled: true
+    emailReceivers: [
+      {
+        name: 'AppEmailReceiver'
+        emailAddress: email
+        useCommonAlertSchema: true
+      }
+    ]
   }
 }
